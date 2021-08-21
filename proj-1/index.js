@@ -138,14 +138,20 @@ app.put("/filmes/:id", (req, res) => {
 // Método DELETE - Excluir item
 app.delete("/filmes/:id", (req, res) => {
   const id = req.params.id - 1;
-  const movie = movies[id];
+  const movieIndex = getIndexByMovie(id);
 
-  if (!movie) {
-    res.send("Filme não encontrado");
+  if (movieIndex < 0) {
+    res.status(400).send({
+      message: "Filme não encontrado, tente novamente."
+    });
+    return;
   }
 
-  delete movies[id];
-  res.send("Filme excluído com sucesso!");
+  movies.splice(movieIndex, 1);
+
+  res.send({
+    message: "Filme excluído com sucesso!"
+  });
 });
 
 app.listen(port, () => {
