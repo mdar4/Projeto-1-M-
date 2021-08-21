@@ -41,8 +41,12 @@ const getMoviesValidate = () => movies.filter(Boolean);
 
 const getMoviesById = (id) => {
     getMoviesValidate().find((movie) => {
-        movie.id === id;
+        movie.id == id;
     });
+}
+
+const getIndexByMovie = (id) => {
+  getMoviesValidate().findIndex((movie) => movie.id == id);
 }
 
 // Método GET - Home
@@ -56,8 +60,8 @@ app.get("/filmes", (req, res) => {
 });
 
 app.get("/filmes/:id", (req, res) => {
-  const id = req.params.id - 1;
-  const movie = movies[id];
+  const id = parseInt(req.params.id);
+  const movie = getMoviesById(id);
 
   if (!movie) {
     res.send("Filme não encontrado");
@@ -68,10 +72,26 @@ app.get("/filmes/:id", (req, res) => {
 
 // Método POST - Criar filme
 app.post("/filmes", (req, res) => {
-  const movie = req.body.movie;
-  const id = movies.length;
-  movies.push(movie);
+  const movie = req.body;
 
+  if(!movie || !movie.nome ||!movie.urlImg){
+    res.status(400).send({
+      message: "Filme inválido, tente novamente."
+    });
+    return;
+  }
+
+  const lastMovie = movies[movies.length -1];
+
+  if(movies.length){
+    movie.id = lastMovie.id +1;
+    movies.push(movie);
+  
+  }else {
+    movie.id = 1;
+    movies.push(movie);
+  }
+  
   res.send(`Filme adicionado com sucesso: ${movie}.
     O id do Filme é: ${id}.`);
 });
@@ -79,11 +99,40 @@ app.post("/filmes", (req, res) => {
 // Método PUT - Atualizar itens
 app.put("/filmes/:id", (req, res) => {
   const id = req.params.id - 1;
-  const movie = req.body.movie;
-  movies[id] = movie;
+  const movieIndex = getIndexByMovie(id);
 
-  res.send(`Filme atualizado com sucesso: ${movie}.
-    O id do Filme é: ${id}.`);
+  if(movieIndex < 0){
+    res.status(400).send({
+      message: "Filme não encontrado, tente novamente."
+    })
+    return;
+  }
+
+  const newMovie = req.body;
+
+  if(!Object.keys(newMovie).length){
+    res.status(400).send({
+      message: "O body está vazio !"
+    })
+    return;
+  }
+
+  if(!newMovie || !newMovie.nome || !newMovie.urlImg) {
+    res.status(400).send({
+      message: "Filme inválido, tente novamente."
+    })
+    return;
+  }
+
+  const movie = getMoviesById(id);
+
+  console.log(movieIndex);
+  movies[movieIndex] = {
+    ... movie,
+    ... newMovie,
+  };
+
+  res.send(movies[movieIndex]);
 });
 
 // Método DELETE - Excluir item
